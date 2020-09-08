@@ -11,8 +11,6 @@
         kind: Secret
         metadata:
           name: pgsql-backup-s3-secret
-        data:
-          gpg_public_key: ${GPG_PUBLIC_KEY}
       - apiVersion: batch/v1
         kind: Job
         metadata:
@@ -31,20 +29,16 @@
                   command:
                     - 'bash'
                     - '-c'
-                    - '/opt/app-root/etc/backup-s3.sh ${PGSQL_HOST} ${PGSQL_USER} ${PGSQL_PASSWORD} ${AWS_S3_BUCKET_NAME} ${GPG_RECIPIENT}'
+                    - '/opt/app-root/etc/backup-s3.sh ${PGSQL_HOST} ${PGSQL_USER} ${PGSQL_PASSWORD} ${AWS_S3_BUCKET_NAME} ${PGSL_DBNAME}'
                   volumeMounts:
                     - name: pgsql-backup-s3-secret-volume
-                      mountPath: /opt/rh/secrets
+                      mountPath: /opt/app-root/secrets
                       readOnly: true
                   env:
                     - name: AWS_ACCESS_KEY_ID
                       value: ${AWS_ACCESS_KEY_ID}
                     - name: AWS_SECRET_ACCESS_KEY
                       value: ${AWS_SECRET_ACCESS_KEY}
-                    - name: GPG_RECIPIENT
-                      value: ${GPG_RECIPIENT}
-                    - name: GPG_TRUST_MODEL
-                      value: ${GPG_TRUST_MODEL}
               volumes:
                 - name: pgsql-backup-s3-secret-volume
                   secret:
@@ -69,12 +63,6 @@
       - name: PGSQL_PASSWORD
         description: 'PostgresSQL user password'
         required: true
-      - name: GPG_RECIPIENT
-        description: 'GPG recpient name to be used to encrypt the database archive'
+      - name: PGSQL_DBNAME
+        description: 'PostgresSQL database name'
         required: true
-      - name: GPG_PUBLIC_KEY
-        description: 'GPG public key content (base64 encoded)'
-        required: true
-      - name: GPG_TRUST_MODEL
-        description: 'GPG encryption trust model, defaults to "always"'
-        value: 'always'
