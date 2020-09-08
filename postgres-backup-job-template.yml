@@ -29,12 +29,20 @@
                   command:
                     - 'bash'
                     - '-c'
-                    - '/opt/app-root/etc/backup-s3.sh ${PGSQL_HOST} ${PGSQL_USER} ${PGSQL_PASSWORD} ${AWS_S3_BUCKET_NAME} ${PGSL_DBNAME}'
+                    - '/opt/app-root/etc/backup-s3.sh ${PGSQL_HOST} ${PGSQL_USER} ${PGSQL_PASSWORD} ${AWS_S3_BUCKET_NAME} ${PGSQL_DBNAME}'
                   volumeMounts:
                     - name: pgsql-backup-s3-secret-volume
                       mountPath: /opt/app-root/secrets
                       readOnly: true
                   env:
+                    - name: PGSQL_HOST
+                      value: ${PGSQL_HOST}
+                    - name: PGSQL_USER
+                      value: ${PGSQL_USER}
+                    - name: PGSQL_PASSWORD
+                      value: ${PGSQL_PASSWORD}
+                    - name: PGSQL_DBNAME
+                      value: ${PGSQL_DBNAME}
                     - name: AWS_ACCESS_KEY_ID
                       value: ${AWS_ACCESS_KEY_ID}
                     - name: AWS_SECRET_ACCESS_KEY
