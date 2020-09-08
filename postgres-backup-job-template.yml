@@ -24,7 +24,7 @@
             spec:
               containers:
                 - name: pgsql-backup-s3
-                  image: openshift/s2i-postgres-backup:latest
+                  image: docker-registry.default.svc:5000/openshift/s2i-postgres-backup:latest
                   imagePullPolicy: Always
                   command:
                     - 'bash'
