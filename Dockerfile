@@ -20,7 +20,6 @@ RUN dnf -qy install postgresql12
 RUN dnf -qy install python3
 RUN pip3 install awscli s3cmd
 
-
 # TODO (optional): Copy the builder files into /opt/app-root
 # COPY ./<builder_folder>/ /opt/app-root/
 
@@ -32,9 +31,13 @@ COPY ./s2i/bin/ $STI_SCRIPTS_PATH
 # RUN chown -R 1001:1001 /opt/app-root
 COPY ./root/ /
 
+
+COPY ./root/opt/app-root/etc/s3cfg ${APP_ROOT}/src/.s3cfg
+
 # Drop the root user and make the content of /opt/app-root owned by user 1001
 RUN chown -R 1001:0 ${APP_ROOT} && chmod -R ug+rwx ${APP_ROOT} && \
     rpm-file-permissions
+
 
 # This default user is created in the openshift/base-centos7 image
 USER 1001
