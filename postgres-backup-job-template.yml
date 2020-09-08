@@ -1,0 +1,80 @@
+---
+    apiVersion: v1
+    kind: Template
+    metadata:
+      name: pgsql-backup-s3-job-template
+      annotations:
+        description: 'Job for backing up Postgres data to Amazon S3'
+    objects:
+      -
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: pgsql-backup-s3-secret
+        data:
+          gpg_public_key: ${GPG_PUBLIC_KEY}
+      - apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: pgsql-backup-s3
+        spec:
+          parallelism: 1
+          completions: 1
+          template:
+            metadata:
+              name: pgsql-backup-s3
+            spec:
+              containers:
+                - name: pgsql-backup-s3
+                  image: openshift/s2i-postgres-backup:latest
+                  imagePullPolicy: Always
+                  command:
+                    - 'bash'
+                    - '-c'
+                    - '/opt/app-root/etc/backup-s3.sh ${PGSQL_HOST} ${PGSQL_USER} ${PGSQL_PASSWORD} ${AWS_S3_BUCKET_NAME} ${GPG_RECIPIENT}'
+                  volumeMounts:
+                    - name: pgsql-backup-s3-secret-volume
+                      mountPath: /opt/rh/secrets
+                      readOnly: true
+                  env:
+                    - name: AWS_ACCESS_KEY_ID
+                      value: ${AWS_ACCESS_KEY_ID}
+                    - name: AWS_SECRET_ACCESS_KEY
+                      value: ${AWS_SECRET_ACCESS_KEY}
+                    - name: GPG_RECIPIENT
+                      value: ${GPG_RECIPIENT}
+                    - name: GPG_TRUST_MODEL
+                      value: ${GPG_TRUST_MODEL}
+              volumes:
+                - name: pgsql-backup-s3-secret-volume
+                  secret:
+                    secretName: pgsql-backup-s3-secret
+              restartPolicy: Never
+    parameters:
+      - name: AWS_ACCESS_KEY_ID
+        description: 'AWS Access Key ID'
+        required: true
+      - name: AWS_SECRET_ACCESS_KEY
+        description: 'AWS Secret Access Key'
+        required: true
+      - name: AWS_S3_BUCKET_NAME
+        description: 'Name of an existing Amazon S3 bucket where backups are to be pushed'
+        required: true
+      - name: PGSQL_HOST
+        description: 'PostgreSQL host to target'
+        required: true
+      - name: PGSQL_USER
+        description: 'PostgresSQL user to perform the backup'
+        required: true
+      - name: PGSQL_PASSWORD
+        description: 'PostgresSQL user password'
+        required: true
+      - name: GPG_RECIPIENT
+        description: 'GPG recpient name to be used to encrypt the database archive'
+        required: true
+      - name: GPG_PUBLIC_KEY
+        description: 'GPG public key content (base64 encoded)'
+        required: true
+      - name: GPG_TRUST_MODEL
+        description: 'GPG encryption trust model, defaults to "always"'
+        value: 'always'
