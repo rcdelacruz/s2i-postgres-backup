@@ -21,7 +21,7 @@ NAMESPACE=$6
 
 TIMESTAMP=$(date '+%H:%M:%S')
 echo "==> Dumping database $DATABASE"
-PGPASSWORD="$PASSWORD" pg_dump -h $HOST -U $USER -F t -d $DATABASE -p 10001 > /tmp/$DATABASE-$TIMESTAMP.dump.tar
+PGPASSWORD="$PASSWORD" pg_dump -h $HOST -U $USER -F t -d $DATABASE > /tmp/$DATABASE-$TIMESTAMP.dump.tar
 #echo "==> Encrypting database archive \"$DATABASE\""
 #gpg --no-tty --batch --yes --encrypt --recipient "$GPG_RECIPIENT" --trust-model $GPG_TRUST_MODEL /tmp/$DATABASE-$TIMESTAMP.dump.gz 
 echo "==> Copying $DATABASE to S3 bucket s3://$S3_BUCKET_NAME/backups/pgsql/$NAMESPACE/"
