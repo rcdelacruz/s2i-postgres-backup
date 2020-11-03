@@ -10,11 +10,11 @@
         apiVersion: v1
         kind: Secret
         metadata:
-          name: pgsql-backup-s3-secret
+          name: ${PGSQL_APP_NAME}-secret
       - apiVersion: batch/v1beta1
         kind: CronJob
         metadata:
-          name: pgsql-backup-s3-cronjob
+          name: ${PGSQL_APP_NAME}-backup-cronjob
         spec:
           schedule: ${CRON_SCHEDULE}
           jobTemplate:
@@ -24,7 +24,7 @@
                   name: pgsql-backup-s3
                 spec:
                   containers:
-                    - name: pgsql-backup-s3-cronjob
+                    - name: ${PGSQL_APP_NAME}-backup-cronjob
                       image: docker-registry.default.svc:5000/openshift/s2i-postgres-backup:latest
                       imagePullPolicy: Always
                       command:
@@ -32,7 +32,7 @@
                         - '-c'
                         - '/opt/app-root/etc/backup-s3.sh ${PGSQL_HOST} ${PGSQL_USER} ${PGSQL_PASSWORD} ${AWS_S3_BUCKET_NAME} ${PGSQL_DBNAME} ${NAMESPACE}'
                       volumeMounts:
-                        - name: pgsql-backup-s3-secret-volume
+                        - name: ${PGSQL_APP_NAME}-secret-volume
                           mountPath: /opt/app-root/secrets
                           readOnly: true
                       env:
@@ -41,9 +41,9 @@
                         - name: AWS_SECRET_ACCESS_KEY
                           value: ${AWS_SECRET_ACCESS_KEY}
                   volumes:
-                    - name: pgsql-backup-s3-secret-volume
+                    - name: ${PGSQL_APP_NAME}-secret-volume
                       secret:
-                        secretName: pgsql-backup-s3-secret
+                        secretName: ${PGSQL_APP_NAME}-secret
                   restartPolicy: Never
     parameters:
       - name: AWS_ACCESS_KEY_ID
@@ -72,4 +72,7 @@
         required: true
       - name: NAMESPACE
         description: 'Project namespace'
+        required: true
+      - name: PGSQL_APP_NAME
+        description: 'PostgreSQL application name'
         required: true
