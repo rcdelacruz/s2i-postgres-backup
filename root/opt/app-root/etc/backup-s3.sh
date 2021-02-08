@@ -21,11 +21,11 @@ NAMESPACE=$6
 
 TIMESTAMP=$(date '+%H:%M:%S')
 echo "==> Dumping database $DATABASE"
-PGPASSWORD="$PASSWORD" pg_dump -h $HOST -U $USER -F t -d $DATABASE > /tmp/$DATABASE-$TIMESTAMP.dump.tar
+PGPASSWORD="$PASSWORD" pg_dump -c --column-inserts --if-exist -h $HOST -U $USER -d $DATABASE | sed -e '/^--/d' | gzip -9 > /tmp/$DATABASE-$TIMESTAMP.sql.gz
 #echo "==> Encrypting database archive \"$DATABASE\""
 #gpg --no-tty --batch --yes --encrypt --recipient "$GPG_RECIPIENT" --trust-model $GPG_TRUST_MODEL /tmp/$DATABASE-$TIMESTAMP.dump.gz 
 echo "==> Copying $DATABASE to S3 bucket s3://$S3_BUCKET_NAME/backups/pgsql/$NAMESPACE/"
-s3cmd put --progress /tmp/$DATABASE-$TIMESTAMP.dump.tar s3://$S3_BUCKET_NAME/backups/pgsql/$NAMESPACE/$DATABASE-$TIMESTAMP.dump.tar
+s3cmd put --progress /tmp/$DATABASE-$TIMESTAMP.sql.gz s3://$S3_BUCKET_NAME/backups/pgsql/$NAMESPACE/$DATABASE-$TIMESTAMP.sql.gz
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   echo "==> Dump $DATABASE: COMPLETED"
@@ -34,7 +34,7 @@ else
   exit 1
 fi
 echo "==> Cleaning up"
-rm /tmp/$DATABASE-$TIMESTAMP.dump.tar
+rm /tmp/$DATABASE-$TIMESTAMP.sql.gz
 echo "==> Listing archived artifact under S3 dir: s3://$S3_BUCKET_NAME/backups/pgsql/$NAMESPACE/"
 aws s3 ls s3://$S3_BUCKET_NAME/backups/pgsql/$NAMESPACE/ --human-readable --summarize | grep $DATABASE | grep $TIMESTAMP
 
